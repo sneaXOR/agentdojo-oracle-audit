@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
+import io
 import json
 import subprocess
 import sys
@@ -28,7 +30,8 @@ def state(environment: Any) -> Any:
 
 def execute(runtime: Any, environment: Any, calls: Sequence[Any]) -> None:
     for call in calls:
-        _, error = runtime.run_function(environment, call.function, call.args)
+        with contextlib.redirect_stdout(io.StringIO()):
+            _, error = runtime.run_function(environment, call.function, call.args)
         if error is not None:
             raise RuntimeError(f"{call.function}: {error}")
 
