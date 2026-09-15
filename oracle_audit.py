@@ -38,11 +38,12 @@ def execute(runtime: Any, environment: Any, calls: Sequence[Any]) -> None:
 
 def oracle(task: Any, pre_environment: Any, post_environment: Any, calls: Sequence[Any], kind: str) -> bool:
     output = task.GROUND_TRUTH_OUTPUT
-    if kind == "user":
-        traced = task.utility_from_traces(output, pre_environment, post_environment, calls)
-        return bool(traced if traced is not None else task.utility(output, pre_environment, post_environment))
-    traced = task.security_from_traces(output, pre_environment, post_environment, calls)
-    return bool(traced if traced is not None else task.security(output, pre_environment, post_environment))
+    with contextlib.redirect_stdout(io.StringIO()):
+        if kind == "user":
+            traced = task.utility_from_traces(output, pre_environment, post_environment, calls)
+            return bool(traced if traced is not None else task.utility(output, pre_environment, post_environment))
+        traced = task.security_from_traces(output, pre_environment, post_environment, calls)
+        return bool(traced if traced is not None else task.security(output, pre_environment, post_environment))
 
 
 def fresh_environment(suite: Any, task: Any, kind: str) -> Any:
