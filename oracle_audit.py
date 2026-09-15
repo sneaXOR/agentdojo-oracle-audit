@@ -53,7 +53,8 @@ def fresh_environment(suite: Any, task: Any, kind: str) -> Any:
 def evaluate_task(suite: Any, task_id: str, task: Any, kind: str, FunctionsRuntime: Any) -> dict[str, Any]:
     initial = fresh_environment(suite, task, kind)
     pre = initial.model_copy(deep=True)
-    calls = task.ground_truth(pre.model_copy(deep=True))
+    with contextlib.redirect_stdout(io.StringIO()):
+        calls = task.ground_truth(pre.model_copy(deep=True))
     runtime = FunctionsRuntime(suite.tools)
 
     full_environment = initial.model_copy(deep=True)

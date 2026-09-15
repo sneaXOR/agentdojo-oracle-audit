@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
+import io
 import json
 import re
 import sys
@@ -45,7 +47,8 @@ def replacement(value: Any) -> Any:
 def evaluate_task(suite: Any, task_id: str, task: Any, kind: str, FunctionsRuntime: Any) -> dict[str, Any]:
     initial = fresh_environment(suite, task, kind)
     pre = initial.model_copy(deep=True)
-    calls = task.ground_truth(pre.model_copy(deep=True))
+    with contextlib.redirect_stdout(io.StringIO()):
+        calls = task.ground_truth(pre.model_copy(deep=True))
     runtime = FunctionsRuntime(suite.tools)
 
     full_environment = initial.model_copy(deep=True)
