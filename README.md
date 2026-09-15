@@ -1,62 +1,41 @@
-# Mutation-test the evaluator before trusting the agent score
+# AgentDojo oracle audit
 
-An agent benchmark should not report success when the agent skipped the requested action or sent it to the wrong place.
+Six published AgentDojo traces are marked successful even though the required action is wrong.
 
-This audit mutates AgentDojo's own reference executions, then asks each task's utility or security oracle whether the broken execution still passes. On AgentDojo `v1.2.2` at commit `089ed468cf3ed0322acc66b0211f26d9d90dbf60`, the method exposed five current utility-oracle defects across all four suites:
+![12-second terminal demo](media/oracle-audit-demo.gif)
 
-| Task | Broken execution still scored as success |
+Two examples are ordinary no-attack runs. Command R+ schedules a payment to the wrong account. GPT-4o mini sends the right amount to the wrong account. Both receive `utility=true`.
+
+The audit checked 1,870 public trace files and found six complete false-success traces across three model pipelines. The exact rows are in [`results/impact.json`](results/impact.json).
+
+## What found them
+
+`oracle_audit.py` removes one state-changing action from each reference execution. `argument_audit.py` changes one argument at a time. The task's own grader is then run against the damaged execution.
+
+That process found five current grader defects across Banking, Slack, Travel and Workspace.
+
+| Task | Execution still accepted |
 |---|---|
-| `banking/user_task_6` | No recurring iPhone payment was scheduled. |
-| `banking/user_task_11` | The VAT payment was sent to the wrong recipient. |
-| `slack/user_task_2` | Dora was invited with the wrong email address. |
-| `travel/user_task_3` | The hotel email was sent to an empty recipient list. |
-| `workspace/user_task_12` | The calendar event had the wrong title. |
+| `banking/user_task_6` | No new recurring payment, or a payment to the wrong account |
+| `banking/user_task_11` | VAT payment sent to the wrong account |
+| `slack/user_task_2` | Dora invited with the wrong email |
+| `travel/user_task_3` | Hotel email sent to nobody |
+| `workspace/user_task_12` | Calendar event created with the wrong title |
 
-The included patch repairs all five and adds focused regression tests. It also includes a fix for `banking/user_task_5`, which the audit independently reproduced but which was already reported publicly in AgentDojo issue #161 and PR #169; that case is not claimed as a new finding.
+The patch in [`patches/agentdojo-oracle-fixes.patch`](patches/agentdojo-oracle-fixes.patch) fixes those checks without requiring fields the user never specified. Twenty focused tests pass from a fresh checkout.
 
-## The method
-
-Two deterministic operators test different parts of an oracle:
-
-1. `oracle_audit.py` executes every reference sequence, identifies top-level calls that change serialized environment state, deletes each one in turn, and reruns the task oracle.
-2. `argument_audit.py` changes one argument of each environment-mutating reference call while preserving its type, executes the whole sequence, and reruns the oracle.
-
-This asks the practical question an agent-security evaluator must answer: does the score fail closed when a required effect or value is wrong?
-
-## Results
-
-- 132 tasks and 87 state-mutating reference sequences in the pinned benchmark.
-- 131 action-deletion trials; 124 remained executable.
-- 327 single-argument mutations; 236 remained executable.
-- Five confirmed current defects across Banking, Slack, Travel, and Workspace after source-level review.
-- 16 focused tests pass on a fresh checkout after applying the patch.
-- The patched audit removes the confirmed flags while leaving unrelated and intentionally unconstrained candidates visible for review.
-- All 31 injection-task action deletions were rejected by their security oracles.
-
-Raw mutation counts are candidate counts, not defect counts. For example, reading a webpage appends request telemetry; deleting that read can change serialized state without removing the task's final external effect. Every surviving candidate is reviewed against the prompt, initial state, reference calls, and oracle source before promotion.
-
-## Evidence path
-
-1. [`reviewed_findings.json`](reviewed_findings.json) contains the confirmed cases, causes, repairs, and prior-art exclusion.
-2. [`results/canonical.md`](results/canonical.md) and [`results/arguments.md`](results/arguments.md) summarize the two raw audits; their JSON counterparts contain every trial.
-3. [`patches/agentdojo-oracle-fixes.patch`](patches/agentdojo-oracle-fixes.patch) contains the repairs and regression tests.
-4. [`results/patched.md`](results/patched.md) and [`results/arguments-patched.md`](results/arguments-patched.md) show the post-patch audits.
+`banking/user_task_5` was also reproduced and fixed, but it is not counted as a new finding because it was already reported in [issue 161](https://github.com/ethz-spylab/agentdojo/issues/161) and [PR 169](https://github.com/ethz-spylab/agentdojo/pull/169).
 
 ## Reproduce
-
-Python 3.11 was used for the verified run.
 
 ```powershell
 git clone https://github.com/ethz-spylab/agentdojo.git agentdojo-source
 git -C agentdojo-source checkout 089ed468cf3ed0322acc66b0211f26d9d90dbf60
 python -m pip install -e agentdojo-source pytest
 
-python oracle_audit.py agentdojo-source --benchmark-version v1.2.2 `
-  --expected-commit 089ed468cf3ed0322acc66b0211f26d9d90dbf60 `
-  --json-out results/reproduced-deletions.json
-python argument_audit.py agentdojo-source --benchmark-version v1.2.2 `
-  --expected-commit 089ed468cf3ed0322acc66b0211f26d9d90dbf60 `
-  --json-out results/reproduced-arguments.json
+python impact_audit.py agentdojo-source\runs
+python oracle_audit.py agentdojo-source --expected-commit 089ed468cf3ed0322acc66b0211f26d9d90dbf60
+python argument_audit.py agentdojo-source --expected-commit 089ed468cf3ed0322acc66b0211f26d9d90dbf60
 
 git -C agentdojo-source apply ..\patches\agentdojo-oracle-fixes.patch
 $env:PYTHONPATH = (Resolve-Path agentdojo-source\src).Path
@@ -65,16 +44,12 @@ python -m pytest -q agentdojo-source\tests\test_banking_user_tasks.py `
   agentdojo-source\tests\test_oracle_argument_regressions.py
 ```
 
-Verified from a fresh sparse checkout:
+Verified on a fresh sparse checkout.
 
 ```text
-16 passed in 6.42s
+20 passed in 5.19s
 ```
 
-## Claim boundary
-
-This is a benchmark-oracle audit, not an estimate of model failure rates and not a claim about a Dynamo product defect. The mutation operators intentionally over-generate candidates; source review supplies the semantic judgment.
-
-## License
+The six impact rows are trace files, not six independent model estimates. Four are attacked runs. Six empty-message result files and fourteen broken links were excluded from the impact count. The audit tests AgentDojo, not Dynamo.
 
 MIT

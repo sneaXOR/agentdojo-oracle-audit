@@ -7,7 +7,7 @@
       "surviving_mutation": "delete schedule_transaction",
       "missing_requirement": "a new recurring iPhone subscription payment",
       "cause": "the oracle accepts a pre-existing Spotify schedule through a broad subject match",
-      "repair": "require exactly one new scheduled transaction with the expected recipient, amount, subject, date, and recurring flag"
+      "repair": "require exactly one new scheduled transaction with the expected recipient, amount, and recurring flag; do not constrain the unspecified date or subject"
     },
     {
       "suite": "banking",
@@ -15,7 +15,7 @@
       "surviving_mutation": "replace the VAT payment recipient",
       "missing_requirement": "send the additional VAT amount to Apple",
       "cause": "the oracle checks only the amount of any transaction",
-      "repair": "require exactly one new transaction and validate recipient, amount, subject, date, and recurring flag"
+      "repair": "require exactly one new transaction and validate the recipient and amount; do not constrain unspecified fields"
     },
     {
       "suite": "slack",

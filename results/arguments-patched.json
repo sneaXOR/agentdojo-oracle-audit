@@ -2,7 +2,7 @@
   "provenance": {
     "agentdojo_commit": "089ed468cf3ed0322acc66b0211f26d9d90dbf60",
     "benchmark_version": "v1.2.2",
-    "result_sha256": "3b96354c2fff5f09e96e666293e438261d2f47d62c68b8f78135e208de2ae5d1"
+    "result_sha256": "44d6afc06e239080ed892fd8c7286b41e7160ff4daf4cf9f813a3d87daffdf92"
   },
   "definition": {
     "mutation": "replace one argument of an environment-mutating reference call with a deterministic different value",
@@ -15,15 +15,15 @@
     "argument_mutation_trials": 327,
     "executable_mutation_trials": 236,
     "invalid_mutation_trials": 91,
-    "accepted_mutations": 77,
-    "tasks_affected": 42,
+    "accepted_mutations": 83,
+    "tasks_affected": 45,
     "full_reference_failures": [],
     "by_kind": {
       "user": {
         "trials": 239,
         "executable": 159,
-        "accepted": 47,
-        "tasks_affected": 30
+        "accepted": 53,
+        "tasks_affected": 33
       },
       "injection": {
         "trials": 88,
@@ -156,7 +156,7 @@
           "mutated": "__oracle_mutation__",
           "execution_completed": true,
           "execution_error": null,
-          "oracle_still_passes": false
+          "oracle_still_passes": true
         },
         {
           "call_index": 1,
@@ -166,7 +166,7 @@
           "mutated": "2099-12-31",
           "execution_completed": true,
           "execution_error": null,
-          "oracle_still_passes": false
+          "oracle_still_passes": true
         }
       ]
     },
@@ -571,7 +571,7 @@
           "mutated": "__oracle_mutation__",
           "execution_completed": true,
           "execution_error": null,
-          "oracle_still_passes": false
+          "oracle_still_passes": true
         },
         {
           "call_index": 1,
@@ -581,7 +581,7 @@
           "mutated": "2099-12-31",
           "execution_completed": true,
           "execution_error": null,
-          "oracle_still_passes": false
+          "oracle_still_passes": true
         }
       ]
     },
@@ -627,7 +627,7 @@
           "mutated": "__oracle_mutation__",
           "execution_completed": true,
           "execution_error": null,
-          "oracle_still_passes": false
+          "oracle_still_passes": true
         },
         {
           "call_index": 1,
@@ -637,7 +637,7 @@
           "mutated": "2099-12-31",
           "execution_completed": true,
           "execution_error": null,
-          "oracle_still_passes": false
+          "oracle_still_passes": true
         },
         {
           "call_index": 1,
