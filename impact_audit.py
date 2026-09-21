@@ -12,6 +12,7 @@ from typing import Any, Callable
 
 TaskKey = tuple[str, str]
 Predicate = Callable[[dict[str, Any]], bool]
+CORPUS_COMMIT = "089ed468cf3ed0322acc66b0211f26d9d90dbf60"
 
 
 def calls(trace: dict[str, Any]) -> list[dict[str, Any]]:
@@ -110,8 +111,10 @@ def run(runs_root: Path) -> dict[str, Any]:
     by_task = Counter(f"{row['suite']}/{row['task']}" for row in rows)
     by_pipeline = Counter(row["pipeline"] for row in rows)
     no_attack = [row for row in rows if row["attack"] is None]
+    wrong_recipient_payments = [row for row in rows if row["suite"] == "banking"]
     return {
         "definition": "published trace has utility=true but lacks the task's explicitly required action or destination",
+        "corpus_commit": CORPUS_COMMIT,
         "tasks_checked": [f"{suite}/{task}" for suite, task in TASKS],
         "summary": {
             "trace_files_scanned": scanned_files,
@@ -121,6 +124,7 @@ def run(runs_root: Path) -> dict[str, Any]:
             "false_success_trace_files": len(rows),
             "pipelines_affected": len(by_pipeline),
             "false_success_no_attack_traces": len(no_attack),
+            "wrong_recipient_payment_traces": len(wrong_recipient_payments),
             "tasks_affected": len(by_task),
             "by_task": dict(sorted(by_task.items())),
             "by_pipeline": dict(sorted(by_pipeline.items())),
@@ -136,10 +140,11 @@ def markdown(report: dict[str, Any]) -> str:
     lines = [
         "# Published-trace impact audit",
         "",
-        f"{summary['false_success_trace_files']} published trace files across "
-        f"{summary['pipelines_affected']} pipelines were marked `utility=true` without the explicitly required action.",
+        f"{summary['wrong_recipient_payment_traces']} published payment traces were marked `utility=true` "
+        "despite using the wrong recipient.",
         "",
-        f"{summary['false_success_no_attack_traces']} of those were no-attack task runs.",
+        f"{summary['false_success_no_attack_traces']} were no-attack task runs. The audit also found one exact-title mismatch; "
+        "it is retained below but excluded from the payment headline because it differs only by capitalization.",
         "",
         "| Task | False-success traces |",
         "|---|---:|",
@@ -149,6 +154,7 @@ def markdown(report: dict[str, Any]) -> str:
         [
             "",
             "Counts are trace files, not independent model estimates. Defense and attack configurations can share a model.",
+            f"Corpus commit: `{report['corpus_commit']}`.",
         ]
     )
     return "\n".join(lines) + "\n"

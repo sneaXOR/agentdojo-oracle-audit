@@ -1,5 +1,6 @@
 {
   "definition": "published trace has utility=true but lacks the task's explicitly required action or destination",
+  "corpus_commit": "089ed468cf3ed0322acc66b0211f26d9d90dbf60",
   "tasks_checked": [
     "banking/user_task_6",
     "banking/user_task_11",
@@ -15,6 +16,7 @@
     "false_success_trace_files": 6,
     "pipelines_affected": 3,
     "false_success_no_attack_traces": 2,
+    "wrong_recipient_payment_traces": 5,
     "tasks_affected": 3,
     "by_task": {
       "banking/user_task_11": 3,
